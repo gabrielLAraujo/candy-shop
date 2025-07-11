@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import {
   IndividualCandy,
   individualCandies,
@@ -159,12 +160,14 @@ export default function AdminPanel() {
                     </div>
                   </td>
                   <td className="p-3">
-                    <div className="w-16 h-16 bg-gray-200 rounded overflow-hidden">
+                    <div className="w-16 h-16 bg-gray-200 rounded overflow-hidden relative">
                       {candy.imageUrl && (
-                        <img
+                        <Image
                           src={candy.imageUrl}
                           alt={candy.name}
-                          className="w-full h-full object-cover"
+                          fill
+                          className="object-cover"
+                          sizes="64px"
                         />
                       )}
                     </div>
