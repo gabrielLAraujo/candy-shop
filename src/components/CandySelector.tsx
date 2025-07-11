@@ -21,7 +21,6 @@ export default function CandySelector({
 }: CandySelectorProps) {
   const [showIntroVideo, setShowIntroVideo] = useState(true);
   const [currentStep, setCurrentStep] = useState<"box" | "candies">("box");
-  const [videoError, setVideoError] = useState(false);
 
   const availableCandies = getAvailableIndividualCandies();
   const boxOptions = getBoxOptions();
@@ -55,24 +54,15 @@ export default function CandySelector({
     setCurrentStep("box");
   };
 
-  const handleVideoError = () => {
-    console.error("Erro ao carregar vídeo");
-    setVideoError(true);
-  };
-
-  const handleSkipVideo = () => {
-    setShowIntroVideo(false);
-  };
-
   return (
     <>
-      {/* Intro Video Modal */}
+      {/* Intro Welcome Modal */}
       {showIntroVideo && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-2xl font-bold text-gray-800">
-                🎬 Apresentação da Loja
+                🍬 Alice Doces
               </h3>
               <button
                 onClick={() => setShowIntroVideo(false)}
@@ -82,39 +72,36 @@ export default function CandySelector({
               </button>
             </div>
 
-            {!videoError ? (
-              <div className="aspect-video w-full mb-4">
-                <video
-                  src="/WhatsApp Video 2025-07-09 at 15.01.28.mp4"
-                  controls
-                  className="w-full h-full rounded-lg"
-                  autoPlay
-                  muted
-                  playsInline
-                  preload="metadata"
-                  onError={handleVideoError}
-                >
-                  <source
-                    src="/WhatsApp Video 2025-07-09 at 15.01.28.mp4"
-                    type="video/mp4"
-                  />
-                  Seu navegador não suporta vídeos.
-                </video>
-              </div>
-            ) : (
-              <div className="aspect-video w-full mb-4 bg-gray-100 rounded-lg flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-6xl mb-4">🎬</div>
-                  <p className="text-gray-600 mb-4">Vídeo não disponível</p>
-                  <button
-                    onClick={handleSkipVideo}
-                    className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
-                  >
-                    Pular Vídeo
-                  </button>
+            <div className="aspect-video w-full mb-4 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg flex items-center justify-center">
+              <div className="text-center p-8">
+                <div className="text-6xl mb-4">🍬</div>
+                <h3 className="text-2xl font-bold text-gray-800 mb-4">
+                  Alice Doces
+                </h3>
+                <p className="text-gray-600 mb-6 text-lg">
+                  Bem-vindo à nossa loja de doces artesanais! Escolha sua caixa
+                  personalizada e monte com seus doces favoritos.
+                </p>
+                <div className="bg-white/80 rounded-xl p-4 mb-6">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-purple-600 mb-2">
+                      🎯 Como Funciona
+                    </div>
+                    <div className="text-sm text-gray-600 space-y-1">
+                      <div>1. Escolha o tamanho da caixa (4 ou 12 doces)</div>
+                      <div>2. Selecione seus doces favoritos</div>
+                      <div>3. Envie direto para o WhatsApp</div>
+                    </div>
+                  </div>
                 </div>
+                <button
+                  onClick={() => setShowIntroVideo(false)}
+                  className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors font-semibold"
+                >
+                  Começar a Escolher 🍭
+                </button>
               </div>
-            )}
+            </div>
 
             <div className="text-center">
               <button
