@@ -2,29 +2,40 @@
 
 import { useState } from "react";
 import CandySelector from "@/components/CandySelector";
-import { getAvailableCandies } from "@/data/candies";
+import { getAvailableIndividualCandies, BoxOption } from "@/data/candies";
 
 export default function Home() {
+  const [selectedBox, setSelectedBox] = useState<BoxOption | null>(null);
   const [selectedCandies, setSelectedCandies] = useState<string[]>([]);
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const phoneNumber = "47997010541";
 
-  const availableCandies = getAvailableCandies();
+  const availableCandies = getAvailableIndividualCandies();
   const selectedCandiesData = availableCandies.filter((candy) =>
     selectedCandies.includes(candy.id)
   );
-  const totalPrice = selectedCandiesData.reduce(
-    (sum, candy) => sum + candy.price,
-    0
-  );
+
+  const totalPrice = selectedBox ? selectedBox.price : 0;
+
+  // Função para aplicar máscara de telefone
+  const applyPhoneMask = (value: string) => {
+    const cleaned = value.replace(/\D/g, "");
+    const match = cleaned.match(/^(\d{2})(\d{2})(\d{4})(\d{4})$/);
+    if (match) {
+      return `(${match[1]}) ${match[2]} ${match[3]}-${match[4]}`;
+    }
+    return value;
+  };
 
   const handleSendWhatsApp = () => {
-    if (selectedCandies.length === 0) {
-      alert("Por favor, selecione pelo menos um doce!");
+    if (!selectedBox) {
+      alert("Por favor, selecione uma caixa primeiro!");
       return;
     }
 
-    if (!phoneNumber) {
-      alert("Por favor, insira um número de telefone!");
+    if (selectedCandies.length !== selectedBox.size) {
+      alert(
+        `Por favor, selecione exatamente ${selectedBox.size} doces para sua caixa!`
+      );
       return;
     }
 
@@ -32,19 +43,21 @@ export default function Home() {
 
 Olá! Gostaria de fazer um pedido:
 
-*Doces selecionados:*
+*Caixa selecionada:*
+📦 ${selectedBox.name} - R$ ${selectedBox.price.toFixed(2)}
+
+*Doces escolhidos:*
 ${selectedCandiesData
   .map((candy) => `• ${candy.name} - R$ ${candy.price.toFixed(2)}`)
   .join("\n")}
 
 *Resumo:*
-📦 Quantidade: ${selectedCandiesData.length} item${
-      selectedCandiesData.length > 1 ? "s" : ""
-    }
+📦 Caixa: ${selectedBox.name}
+🍬 Quantidade: ${selectedBox.size} doces personalizados
 💰 Total: R$ ${totalPrice.toFixed(2)}
 
 *Informações do pedido:*
-📱 Número: ${phoneNumber}
+📱 Número: ${applyPhoneMask(phoneNumber)}
 📅 Data: ${new Date().toLocaleDateString("pt-BR")}
 ⏰ Hora: ${new Date().toLocaleTimeString("pt-BR")}
 
@@ -65,7 +78,7 @@ Obrigado! 🍬✨`;
             🍬 Alice Doces 🍭
           </h1>
           <p className="text-center text-gray-600 mt-2">
-            Selecione seus doces favoritos e envie direto pelo WhatsApp!
+            Escolha sua caixa e personalize com seus doces favoritos!
           </p>
         </div>
       </div>
@@ -75,54 +88,92 @@ Obrigado! 🍬✨`;
         {/* Candy Selection */}
         <div className="mb-12">
           <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">
-            🎯 Doces da Alice
+            🎯 Monte sua Caixa Personalizada
           </h2>
           <CandySelector
+            selectedBox={selectedBox}
             selectedCandies={selectedCandies}
-            onSelectionChange={setSelectedCandies}
+            onBoxSelection={setSelectedBox}
+            onCandySelection={setSelectedCandies}
           />
         </div>
 
         {/* Order Summary */}
-        {selectedCandies.length > 0 && (
+        {selectedBox && selectedCandies.length > 0 && (
           <div className="mb-12 p-8 bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20">
             <h3 className="text-2xl font-semibold text-purple-800 mb-6 flex items-center justify-between">
               <span>📋 Resumo do Pedido</span>
               <span className="bg-purple-100 text-purple-800 px-4 py-2 rounded-full text-sm font-medium">
-                {selectedCandies.length} item
-                {selectedCandies.length > 1 ? "s" : ""}
+                {selectedBox.name}
               </span>
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-              {selectedCandiesData.map((candy) => (
-                <div
-                  key={candy.id}
-                  className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200"
-                >
-                  <div className="flex items-center">
-                    <span className="text-pink-500 mr-3 text-2xl">
-                      {candy.emoji}
-                    </span>
-                    <div>
-                      <span className="font-semibold text-gray-800">
-                        {candy.name}
-                      </span>
-                      <p className="text-sm text-gray-600">
-                        {candy.description}
-                      </p>
-                    </div>
-                  </div>
-                  <span className="font-bold text-purple-600 text-lg">
-                    R$ {candy.price.toFixed(2)}
+
+            {/* Box Info */}
+            <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <span className="text-purple-500 mr-3 text-3xl">
+                    {selectedBox.emoji}
                   </span>
+                  <div>
+                    <span className="font-semibold text-gray-800 text-lg">
+                      {selectedBox.name}
+                    </span>
+                    <p className="text-sm text-gray-600">
+                      {selectedBox.description}
+                    </p>
+                  </div>
                 </div>
-              ))}
+                <span className="font-bold text-purple-600 text-2xl">
+                  R$ {selectedBox.price.toFixed(2)}
+                </span>
+              </div>
             </div>
+
+            {/* Selected Candies */}
+            <div className="mb-6">
+              <h4 className="text-lg font-semibold text-gray-800 mb-4">
+                🍬 Doces Selecionados ({selectedCandies.length}/
+                {selectedBox.size})
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {selectedCandiesData.map((candy) => (
+                  <div
+                    key={candy.id}
+                    className="flex items-center justify-between p-4 bg-gradient-to-r from-pink-50 to-purple-50 rounded-xl border border-pink-200"
+                  >
+                    <div className="flex items-center">
+                      <div className="w-12 h-12 bg-purple-200 rounded-full flex items-center justify-center mr-3">
+                        <span className="text-purple-600 text-xl">🍬</span>
+                      </div>
+                      <div>
+                        <span className="font-semibold text-gray-800">
+                          {candy.name}
+                        </span>
+                        <p className="text-sm text-gray-600">
+                          {candy.description}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="font-bold text-pink-600 text-lg">
+                      R$ {candy.price.toFixed(2)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div className="border-t border-purple-200 pt-6">
               <div className="flex justify-between items-center text-xl font-bold text-purple-800">
                 <span>💰 Total do Pedido:</span>
                 <span className="text-2xl">R$ {totalPrice.toFixed(2)}</span>
               </div>
+              {selectedCandies.length < selectedBox.size && (
+                <p className="text-orange-600 text-sm mt-2">
+                  ⚠️ Selecione mais {selectedBox.size - selectedCandies.length}{" "}
+                  doce(s) para completar sua caixa
+                </p>
+              )}
             </div>
           </div>
         )}
@@ -136,67 +187,60 @@ Obrigado! 🍬✨`;
           <div className="max-w-md mx-auto">
             <div className="mb-6">
               <label className="block text-lg font-semibold text-gray-800 mb-4">
-                📞 Número do WhatsApp
+                📞 Enviar Pedido via WhatsApp
               </label>
               <div className="relative">
-                <input
-                  type="tel"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  placeholder="Ex: 5511999999999"
-                  className="w-full px-4 py-4 text-lg border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-200 focus:border-purple-400 transition-all duration-200 bg-white text-gray-800"
-                />
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                  📞
-                </div>
+                <button
+                  onClick={handleSendWhatsApp}
+                  disabled={
+                    !selectedBox || selectedCandies.length !== selectedBox.size
+                  }
+                  className="w-full py-4 px-6 text-xl font-bold text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center justify-center gap-3"
+                >
+                  <span className="text-2xl">📱</span>
+                  Enviar para {applyPhoneMask(phoneNumber)}
+                  <span className="text-2xl">💬</span>
+                </button>
               </div>
               <p className="text-sm text-gray-500 mt-2">
-                Digite apenas números, sem espaços ou caracteres especiais
+                Clique para enviar o pedido diretamente para o WhatsApp da Alice
+                Doces
               </p>
             </div>
 
-            <button
-              onClick={handleSendWhatsApp}
-              disabled={selectedCandies.length === 0 || !phoneNumber}
-              className="w-full py-4 px-6 text-xl font-bold text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center justify-center gap-3"
-            >
-              <span className="text-2xl">📱</span>
-              Enviar via WhatsApp
-              <span className="text-2xl">💬</span>
-            </button>
-          </div>
-
-          {/* Instructions */}
-          <div className="mt-8 p-6 bg-blue-50 rounded-xl border border-blue-200">
-            <h4 className="font-semibold text-blue-800 mb-3 text-lg">
-              💡 Como funciona:
-            </h4>
-            <ol className="text-sm text-blue-700 space-y-2">
-              <li className="flex items-start">
-                <span className="bg-blue-200 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold mr-3 mt-0.5">
-                  1
-                </span>
-                Selecione os doces que deseja clicando nas imagens
-              </li>
-              <li className="flex items-start">
-                <span className="bg-blue-200 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold mr-3 mt-0.5">
-                  2
-                </span>
-                Digite o número do WhatsApp no campo acima
-              </li>
-              <li className="flex items-start">
-                <span className="bg-blue-200 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold mr-3 mt-0.5">
-                  3
-                </span>
-                Clique em &quot;Enviar via WhatsApp&quot;
-              </li>
-              <li className="flex items-start">
-                <span className="bg-blue-200 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold mr-3 mt-0.5">
-                  4
-                </span>
-                Uma mensagem será aberta automaticamente com seu pedido
-              </li>
-            </ol>
+            {/* Instructions */}
+            <div className="mt-8 p-6 bg-blue-50 rounded-xl border border-blue-200">
+              <h4 className="font-semibold text-blue-800 mb-3 text-lg">
+                💡 Como funciona:
+              </h4>
+              <ol className="text-sm text-blue-700 space-y-2">
+                <li className="flex items-start">
+                  <span className="bg-blue-200 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold mr-3 mt-0.5">
+                    1
+                  </span>
+                  Escolha o tamanho da caixa (4 ou 12 doces)
+                </li>
+                <li className="flex items-start">
+                  <span className="bg-blue-200 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold mr-3 mt-0.5">
+                    2
+                  </span>
+                  Selecione os doces específicos para sua caixa
+                </li>
+                <li className="flex items-start">
+                  <span className="bg-blue-200 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold mr-3 mt-0.5">
+                    3
+                  </span>
+                  Clique em &quot;Enviar para {applyPhoneMask(phoneNumber)}
+                  &quot;
+                </li>
+                <li className="flex items-start">
+                  <span className="bg-blue-200 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold mr-3 mt-0.5">
+                    4
+                  </span>
+                  Uma mensagem será aberta automaticamente com seu pedido
+                </li>
+              </ol>
+            </div>
           </div>
         </div>
       </div>
