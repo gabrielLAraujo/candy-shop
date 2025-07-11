@@ -21,6 +21,7 @@ export default function CandySelector({
 }: CandySelectorProps) {
   const [showIntroVideo, setShowIntroVideo] = useState(true);
   const [currentStep, setCurrentStep] = useState<"box" | "candies">("box");
+  const [videoError, setVideoError] = useState(false);
 
   const availableCandies = getAvailableIndividualCandies();
   const boxOptions = getBoxOptions();
@@ -54,6 +55,15 @@ export default function CandySelector({
     setCurrentStep("box");
   };
 
+  const handleVideoError = () => {
+    console.error("Erro ao carregar vídeo");
+    setVideoError(true);
+  };
+
+  const handleSkipVideo = () => {
+    setShowIntroVideo(false);
+  };
+
   return (
     <>
       {/* Intro Video Modal */}
@@ -71,16 +81,41 @@ export default function CandySelector({
                 ✕
               </button>
             </div>
-            <div className="aspect-video w-full mb-4">
-              <video
-                src="/WhatsApp Video 2025-07-09 at 15.01.28.mp4"
-                controls
-                className="w-full h-full rounded-lg"
-                autoPlay
-              >
-                Seu navegador não suporta vídeos.
-              </video>
-            </div>
+
+            {!videoError ? (
+              <div className="aspect-video w-full mb-4">
+                <video
+                  src="/WhatsApp Video 2025-07-09 at 15.01.28.mp4"
+                  controls
+                  className="w-full h-full rounded-lg"
+                  autoPlay
+                  muted
+                  playsInline
+                  preload="metadata"
+                  onError={handleVideoError}
+                >
+                  <source
+                    src="/WhatsApp Video 2025-07-09 at 15.01.28.mp4"
+                    type="video/mp4"
+                  />
+                  Seu navegador não suporta vídeos.
+                </video>
+              </div>
+            ) : (
+              <div className="aspect-video w-full mb-4 bg-gray-100 rounded-lg flex items-center justify-center">
+                <div className="text-center">
+                  <div className="text-6xl mb-4">🎬</div>
+                  <p className="text-gray-600 mb-4">Vídeo não disponível</p>
+                  <button
+                    onClick={handleSkipVideo}
+                    className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                  >
+                    Pular Vídeo
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="text-center">
               <button
                 onClick={() => setShowIntroVideo(false)}
