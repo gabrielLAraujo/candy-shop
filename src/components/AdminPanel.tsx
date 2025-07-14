@@ -26,7 +26,9 @@ export default function AdminPanel() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showBoxForm, setShowBoxForm] = useState(false);
+  const [showBoxEditModal, setShowBoxEditModal] = useState(false);
   const [editingCandy, setEditingCandy] = useState<Candy | null>(null);
+  const [editingBox, setEditingBox] = useState<BoxOption | null>(null);
   const [newCandy, setNewCandy] = useState({
     name: "",
     price: 0,
@@ -209,6 +211,63 @@ export default function AdminPanel() {
       } catch (error) {
         console.error("Erro ao adicionar caixa:", error);
         showMessage("error", "Erro ao adicionar caixa");
+      }
+    }
+  };
+
+  const handleEditBox = (box: BoxOption) => {
+    setEditingBox(box);
+    setShowBoxEditModal(true);
+  };
+
+  const handleUpdateBox = async () => {
+    if (
+      !editingBox ||
+      !editingBox.name ||
+      editingBox.size <= 0 ||
+      editingBox.price <= 0
+    )
+      return;
+
+    try {
+      const response = await fetch(`/api/boxes/${editingBox.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(editingBox),
+      });
+
+      if (response.ok) {
+        await fetchBoxes();
+        setShowBoxEditModal(false);
+        setEditingBox(null);
+        showMessage("success", "Caixa atualizada com sucesso!");
+      } else {
+        showMessage("error", "Erro ao atualizar caixa");
+      }
+    } catch (error) {
+      console.error("Erro ao atualizar caixa:", error);
+      showMessage("error", "Erro ao atualizar caixa");
+    }
+  };
+
+  const handleRemoveBox = async (id: string) => {
+    if (confirm("Tem certeza que deseja remover esta caixa?")) {
+      try {
+        const response = await fetch(`/api/boxes/${id}`, {
+          method: "DELETE",
+        });
+
+        if (response.ok) {
+          await fetchBoxes();
+          showMessage("success", "Caixa removida com sucesso!");
+        } else {
+          showMessage("error", "Erro ao remover caixa");
+        }
+      } catch (error) {
+        console.error("Erro ao remover caixa:", error);
+        showMessage("error", "Erro ao remover caixa");
       }
     }
   };
@@ -535,23 +594,138 @@ export default function AdminPanel() {
               key={box.id}
               className="p-4 border rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
             >
-              <div className="flex items-center justify-between">
-                <div>
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
                   <div className="text-2xl mb-2">{box.emoji}</div>
                   <h4 className="font-semibold text-lg text-black">
                     {box.name}
                   </h4>
-                  <p className="text-black text-sm">{box.description}</p>
+                  <p className="text-black text-sm mb-2">{box.description}</p>
                   <p className="text-sm text-black">
                     {box.size} doces - R$ {box.price.toFixed(2)}
                   </p>
                   <p className="text-xs text-gray-600">Peso: {box.weight}g</p>
+                </div>
+                <div className="flex flex-col gap-2 ml-4">
+                  <button
+                    onClick={() => handleEditBox(box)}
+                    className="bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600 transition-colors font-medium text-sm"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => handleRemoveBox(box.id)}
+                    className="bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-600 transition-colors font-medium text-sm"
+                  >
+                    Remover
+                  </button>
                 </div>
               </div>
             </div>
           ))}
         </div>
       </div>
+
+      {/* Edit Box Modal */}
+      {showBoxEditModal && editingBox && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-semibold text-black mb-4">
+              Editar Caixa
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input
+                type="text"
+                placeholder="Nome da caixa"
+                value={editingBox.name}
+                onChange={(e) =>
+                  setEditingBox({ ...editingBox, name: e.target.value })
+                }
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+              />
+              <input
+                type="text"
+                placeholder="Quantidade de doces"
+                value={editingBox.size === 0 ? "" : editingBox.size}
+                onChange={(e) =>
+                  setEditingBox({
+                    ...editingBox,
+                    size: parseInt(e.target.value) || 0,
+                  })
+                }
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+              />
+              <input
+                type="text"
+                placeholder="Preço"
+                value={editingBox.price === 0 ? "" : editingBox.price}
+                onChange={(e) =>
+                  setEditingBox({
+                    ...editingBox,
+                    price: parseFloat(e.target.value) || 0,
+                  })
+                }
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+              />
+              <input
+                type="text"
+                placeholder="Peso em gramas"
+                value={editingBox.weight === 0 ? "" : editingBox.weight}
+                onChange={(e) =>
+                  setEditingBox({
+                    ...editingBox,
+                    weight: parseFloat(e.target.value) || 0,
+                  })
+                }
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+              />
+              <input
+                type="text"
+                placeholder="Emoji"
+                value={editingBox.emoji}
+                onChange={(e) =>
+                  setEditingBox({ ...editingBox, emoji: e.target.value })
+                }
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+              />
+              <textarea
+                placeholder="Descrição da caixa"
+                value={editingBox.description}
+                onChange={(e) =>
+                  setEditingBox({
+                    ...editingBox,
+                    description: e.target.value,
+                  })
+                }
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 md:col-span-2"
+                rows={3}
+              />
+            </div>
+            <div className="flex gap-4 mt-6">
+              <button
+                onClick={handleUpdateBox}
+                className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 disabled:bg-gray-400 disabled:text-black disabled:cursor-not-allowed"
+                disabled={
+                  !editingBox.name ||
+                  editingBox.size <= 0 ||
+                  editingBox.price <= 0
+                }
+              >
+                Salvar
+              </button>
+              <button
+                onClick={() => {
+                  setShowBoxEditModal(false);
+                  setEditingBox(null);
+                }}
+                className="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
