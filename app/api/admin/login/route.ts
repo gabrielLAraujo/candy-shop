@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     
     console.log('Usuário encontrado:', user);
 
-    if (user && password === 'doces2024') {
+    if (user && password === process.env.ADMIN_PASSWORD) {
       console.log('Login bem-sucedido');
       const response = NextResponse.json({ ok: true });
       response.cookies.set(SESSION_COOKIE, 'active', {
