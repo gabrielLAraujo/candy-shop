@@ -24,3 +24,19 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Garantir que elementos desabilitados tenham texto preto */
+input:disabled,
+textarea:disabled,
+button:disabled {
+  color: #000000 !important;
+}
+
+/* Forçar texto preto em elementos desabilitados com classes Tailwind */
+.disabled\:text-black {
+  color: #000000 !important;
+}
+
+.disabled\:text-gray-900 {
+  color: #000000 !important;
+}

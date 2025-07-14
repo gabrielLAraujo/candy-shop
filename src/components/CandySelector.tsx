@@ -1,16 +1,28 @@
 import React, { useState } from "react";
-import Image from "next/image";
-import {
-  getAvailableIndividualCandies,
-  getBoxOptions,
-  BoxOption,
-} from "@/data/candies";
+
+interface Candy {
+  id: string;
+  name: string;
+  price: number;
+  description: string;
+  image: string | null;
+}
+
+interface BoxOption {
+  id: string;
+  name: string;
+  size: number;
+  price: number;
+  description: string;
+  emoji: string;
+}
 
 interface CandySelectorProps {
   selectedBox: BoxOption | null;
   selectedCandies: string[];
   onBoxSelection: (box: BoxOption | null) => void;
   onCandySelection: (candyIds: string[]) => void;
+  availableCandies: Candy[];
 }
 
 export default function CandySelector({
@@ -18,34 +30,33 @@ export default function CandySelector({
   selectedCandies,
   onBoxSelection,
   onCandySelection,
+  availableCandies,
 }: CandySelectorProps) {
   const [showIntroVideo, setShowIntroVideo] = useState(true);
   const [currentStep, setCurrentStep] = useState<"box" | "candies">("box");
 
-  const availableCandies = getAvailableIndividualCandies();
-  const boxOptions = getBoxOptions();
+  const boxOptions: BoxOption[] = [
+    {
+      id: "caixa-4",
+      name: "Caixa com 4 Doces",
+      size: 4,
+      price: 10.0,
+      description: "Caixa personalizada com 4 doces da sua escolha",
+      emoji: "📦",
+    },
+    {
+      id: "caixa-12",
+      name: "Caixa com 12 Doces",
+      size: 12,
+      price: 30.0,
+      description: "Caixa personalizada com 12 doces da sua escolha",
+      emoji: "🎁",
+    },
+  ];
 
   const handleBoxClick = (box: BoxOption) => {
     onBoxSelection(box);
     setCurrentStep("candies");
-  };
-
-  const handleCandyClick = (candyId: string) => {
-    if (!selectedBox) return;
-
-    let newSelection: string[];
-    if (selectedCandies.includes(candyId)) {
-      newSelection = selectedCandies.filter((id) => id !== candyId);
-    } else {
-      if (selectedCandies.length >= selectedBox.size) {
-        alert(
-          `Você pode selecionar no máximo ${selectedBox.size} doces para esta caixa!`
-        );
-        return;
-      }
-      newSelection = [...selectedCandies, candyId];
-    }
-    onCandySelection(newSelection);
   };
 
   const handleBackToBoxSelection = () => {
@@ -143,7 +154,7 @@ export default function CandySelector({
                     <p className="text-gray-600 mb-4">{box.description}</p>
                     <div className="bg-white/80 rounded-xl p-4 mb-4">
                       <div className="text-3xl font-bold text-purple-600">
-                        R$ {box.price.toFixed(2)}
+                        R$ {(box.size * 2.5).toFixed(2)}
                       </div>
                       <div className="text-sm text-gray-600">
                         {box.size} doces personalizados
@@ -183,43 +194,99 @@ export default function CandySelector({
                 selecionados
               </span>
             </div>
+            <div className="bg-blue-50 rounded-xl p-4 mt-4 max-w-2xl mx-auto">
+              <p className="text-blue-800 text-sm">
+                💡 <strong>Dica:</strong> Use os botões &quot;+&quot; e
+                &quot;−&quot; no topo das imagens para adicionar ou remover
+                doces. O número roxo mostra quantas unidades você selecionou.
+              </p>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {availableCandies.map((candy) => {
               const isSelected = selectedCandies.includes(candy.id);
-              const isDisabled =
-                !isSelected && selectedCandies.length >= selectedBox.size;
+              const candyCount = selectedCandies.filter(
+                (id) => id === candy.id
+              ).length;
+              const canAdd = selectedCandies.length < selectedBox.size;
+              const canRemove = isSelected;
 
               return (
                 <div
                   key={candy.id}
-                  className={`group relative cursor-pointer transition-all duration-300 transform hover:scale-105 ${
+                  className={`group relative transition-all duration-300 transform hover:scale-105 ${
                     isSelected
                       ? "ring-4 ring-purple-400 shadow-xl"
-                      : isDisabled
-                      ? "opacity-50 cursor-not-allowed"
+                      : !canAdd
+                      ? "opacity-50"
                       : "hover:shadow-lg"
                   }`}
-                  onClick={() => !isDisabled && handleCandyClick(candy.id)}
                 >
                   {/* Candy Card */}
                   <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-gray-200 hover:border-purple-300 transition-all duration-300">
                     <div className="aspect-square relative">
-                      <Image
-                        src={candy.imageUrl}
-                        alt={candy.name}
-                        fill
-                        className="object-cover transition-transform duration-300 group-hover:scale-110"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      />
+                      {candy.image ? (
+                        <img
+                          src={candy.image}
+                          alt={candy.name}
+                          className="object-cover w-full h-full rounded-2xl"
+                          style={{ aspectRatio: 1 }}
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-purple-200 to-pink-200 flex items-center justify-center">
+                          <span className="text-4xl">🍬</span>
+                        </div>
+                      )}
                       {/* Overlay */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
+                      {/* Control Buttons */}
+                      <div className="absolute top-2 right-2 flex gap-1">
+                        {/* Remove Button */}
+                        {canRemove && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const index = selectedCandies.indexOf(candy.id);
+                              if (index !== -1) {
+                                const newSelection = [
+                                  ...selectedCandies.slice(0, index),
+                                  ...selectedCandies.slice(index + 1),
+                                ];
+                                onCandySelection(newSelection);
+                              }
+                            }}
+                            className="bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hover:bg-red-600 transition-colors"
+                          >
+                            −
+                          </button>
+                        )}
+
+                        {/* Add Button */}
+                        {selectedCandies.length < selectedBox.size && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (selectedCandies.length < selectedBox.size) {
+                                const newSelection = [
+                                  ...selectedCandies,
+                                  candy.id,
+                                ];
+                                onCandySelection(newSelection);
+                              }
+                            }}
+                            className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hover:bg-green-600 transition-colors"
+                          >
+                            +
+                          </button>
+                        )}
+                      </div>
+
                       {/* Selection Indicator */}
                       {isSelected && (
-                        <div className="absolute top-4 right-4 bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg">
-                          ✓
+                        <div className="absolute top-2 left-2 bg-purple-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg">
+                          {candyCount}
                         </div>
                       )}
                     </div>

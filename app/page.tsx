@@ -1,22 +1,55 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import CandySelector from "@/components/CandySelector";
-import { getAvailableIndividualCandies, BoxOption } from "@/data/candies";
+
+interface Candy {
+  id: string;
+  name: string;
+  price: number;
+  description: string;
+  image: string | null;
+}
+
+interface BoxOption {
+  id: string;
+  name: string;
+  size: number;
+  price: number;
+  description: string;
+  emoji: string;
+}
 
 export default function Home() {
   const [selectedBox, setSelectedBox] = useState<BoxOption | null>(null);
   const [selectedCandies, setSelectedCandies] = useState<string[]>([]);
+  const [availableCandies, setAvailableCandies] = useState<Candy[]>([]);
+  const [loading, setLoading] = useState(true);
   const phoneNumber = "47997010541";
 
-  const availableCandies = getAvailableIndividualCandies();
-  const selectedCandiesData = availableCandies.filter((candy) =>
-    selectedCandies.includes(candy.id)
-  );
+  // Carregar doces do banco de dados
+  useEffect(() => {
+    fetchCandies();
+  }, []);
 
-  const totalPrice = selectedBox ? selectedBox.price : 0;
+  const fetchCandies = async () => {
+    try {
+      const response = await fetch("/api/candies");
+      const data = await response.json();
+      setAvailableCandies(data);
+    } catch (error) {
+      console.error("Erro ao carregar doces:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // Função para aplicar máscara de telefone
+  const selectedCandiesTotal = selectedCandies.reduce((total, candyId) => {
+    const candy = availableCandies.find((c) => c.id === candyId);
+    return total + (candy?.price || 0);
+  }, 0);
+  const finalTotal = selectedCandiesTotal;
+
   const applyPhoneMask = (value: string) => {
     const cleaned = value.replace(/\D/g, "");
     const match = cleaned.match(/^(\d{2})(\d{2})(\d{4})(\d{4})$/);
@@ -39,33 +72,47 @@ export default function Home() {
       return;
     }
 
-    const message = `🍬 *PEDIDO - ALICE DOCES* 🍭
+    // Criar contagem de doces selecionados
+    const candyCounts: { [key: string]: number } = {};
+    selectedCandies.forEach((candyId) => {
+      candyCounts[candyId] = (candyCounts[candyId] || 0) + 1;
+    });
+
+    // Criar lista de doces com quantidades
+    const candyList = Object.entries(candyCounts)
+      .map(([candyId, count]) => {
+        const candy = availableCandies.find((c) => c.id === candyId);
+        if (!candy) return "";
+        const quantityText = count > 1 ? ` (${count}x)` : "";
+        return `• ${candy.name}${quantityText} - R$ ${candy.price.toFixed(2)}`;
+      })
+      .filter((text) => text !== "")
+      .join("\n");
+
+    const message = `*PEDIDO - ALICE DOCES*
 
 Olá! Gostaria de fazer um pedido:
 
 *Caixa selecionada:*
-📦 ${selectedBox.name} - R$ ${selectedBox.price.toFixed(2)}
+${selectedBox.name} - ${selectedBox.size} doces personalizados
 
 *Doces escolhidos:*
-${selectedCandiesData
-  .map((candy) => `• ${candy.name} - R$ ${candy.price.toFixed(2)}`)
-  .join("\n")}
+${candyList}
 
 *Resumo:*
-📦 Caixa: ${selectedBox.name}
-🍬 Quantidade: ${selectedBox.size} doces personalizados
-💰 Total: R$ ${totalPrice.toFixed(2)}
+Caixa: ${selectedBox.name}
+Quantidade: ${selectedBox.size} doces personalizados
+Total: R$ ${finalTotal.toFixed(2)}
 
 *Informações do pedido:*
-📱 Número: ${applyPhoneMask(phoneNumber)}
-📅 Data: ${new Date().toLocaleDateString("pt-BR")}
-⏰ Hora: ${new Date().toLocaleTimeString("pt-BR")}
+Número: ${applyPhoneMask(phoneNumber)}
+Data: ${new Date().toLocaleDateString("pt-BR")}
+Hora: ${new Date().toLocaleTimeString("pt-BR")}
 
-Obrigado! 🍬✨`;
+Obrigado! :)`;
 
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(
-      message
-    )}`;
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
     window.open(whatsappUrl, "_blank");
   };
 
@@ -90,12 +137,19 @@ Obrigado! 🍬✨`;
           <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">
             🎯 Monte sua Caixa Personalizada
           </h2>
-          <CandySelector
-            selectedBox={selectedBox}
-            selectedCandies={selectedCandies}
-            onBoxSelection={setSelectedBox}
-            onCandySelection={setSelectedCandies}
-          />
+          {loading ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="text-gray-600 text-lg">Carregando doces...</div>
+            </div>
+          ) : (
+            <CandySelector
+              selectedBox={selectedBox}
+              selectedCandies={selectedCandies}
+              onBoxSelection={setSelectedBox}
+              onCandySelection={setSelectedCandies}
+              availableCandies={availableCandies}
+            />
+          )}
         </div>
 
         {/* Order Summary */}
@@ -125,49 +179,77 @@ Obrigado! 🍬✨`;
                   </div>
                 </div>
                 <span className="font-bold text-purple-600 text-2xl">
-                  R$ {selectedBox.price.toFixed(2)}
+                  R$ {(selectedBox.size * 2.5).toFixed(2)}
                 </span>
               </div>
             </div>
 
-            {/* Selected Candies */}
             <div className="mb-6">
               <h4 className="text-lg font-semibold text-gray-800 mb-4">
                 🍬 Doces Selecionados ({selectedCandies.length}/
                 {selectedBox.size})
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {selectedCandiesData.map((candy) => (
-                  <div
-                    key={candy.id}
-                    className="flex items-center justify-between p-4 bg-gradient-to-r from-pink-50 to-purple-50 rounded-xl border border-pink-200"
-                  >
-                    <div className="flex items-center">
-                      <div className="w-12 h-12 bg-purple-200 rounded-full flex items-center justify-center mr-3">
-                        <span className="text-purple-600 text-xl">🍬</span>
+                {(() => {
+                  const candyCounts: { [key: string]: number } = {};
+                  selectedCandies.forEach((candyId) => {
+                    candyCounts[candyId] = (candyCounts[candyId] || 0) + 1;
+                  });
+
+                  return Object.entries(candyCounts).map(([candyId, count]) => {
+                    const candy = availableCandies.find(
+                      (c) => c.id === candyId
+                    );
+                    if (!candy) return null;
+
+                    return (
+                      <div
+                        key={candy.id}
+                        className="flex items-center justify-between p-4 bg-gradient-to-r from-pink-50 to-purple-50 rounded-xl border border-pink-200"
+                      >
+                        <div className="flex items-center">
+                          <div className="w-12 h-12 bg-purple-200 rounded-full flex items-center justify-center mr-3">
+                            <span className="text-purple-600 text-xl">🍬</span>
+                          </div>
+                          <div>
+                            <span className="font-semibold text-gray-800">
+                              {candy.name}
+                              {count > 1 && (
+                                <span className="ml-2 bg-purple-200 text-purple-800 px-2 py-1 rounded-full text-xs font-bold">
+                                  {count}x
+                                </span>
+                              )}
+                            </span>
+                            <p className="text-sm text-gray-600">
+                              {candy.description}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="font-bold text-pink-600 text-lg">
+                            R$ {(candy.price * count).toFixed(2)}
+                          </span>
+                          {count > 1 && (
+                            <div className="text-xs text-gray-500">
+                              R$ {candy.price.toFixed(2)} cada
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div>
-                        <span className="font-semibold text-gray-800">
-                          {candy.name}
-                        </span>
-                        <p className="text-sm text-gray-600">
-                          {candy.description}
-                        </p>
-                      </div>
-                    </div>
-                    <span className="font-bold text-pink-600 text-lg">
-                      R$ {candy.price.toFixed(2)}
-                    </span>
-                  </div>
-                ))}
+                    );
+                  });
+                })()}
               </div>
             </div>
 
             <div className="border-t border-purple-200 pt-6">
               <div className="flex justify-between items-center text-xl font-bold text-purple-800">
                 <span>💰 Total do Pedido:</span>
-                <span className="text-2xl">R$ {totalPrice.toFixed(2)}</span>
+                <span className="text-2xl">R$ {finalTotal.toFixed(2)}</span>
               </div>
+              <p className="text-sm text-gray-600 mt-2">
+                💡 Preço calculado: R$ 2,50 por doce selecionado
+              </p>
               {selectedCandies.length < selectedBox.size && (
                 <p className="text-orange-600 text-sm mt-2">
                   ⚠️ Selecione mais {selectedBox.size - selectedCandies.length}{" "}
@@ -178,7 +260,6 @@ Obrigado! 🍬✨`;
           </div>
         )}
 
-        {/* Contact Section */}
         <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-white/20">
           <h3 className="text-2xl font-bold text-gray-800 mb-6 text-center">
             📱 Enviar Pedido
@@ -208,7 +289,6 @@ Obrigado! 🍬✨`;
               </p>
             </div>
 
-            {/* Instructions */}
             <div className="mt-8 p-6 bg-blue-50 rounded-xl border border-blue-200">
               <h4 className="font-semibold text-blue-800 mb-3 text-lg">
                 💡 Como funciona:
@@ -245,7 +325,6 @@ Obrigado! 🍬✨`;
         </div>
       </div>
 
-      {/* Footer */}
       <div className="text-center py-8 text-gray-600 mt-12">
         <p>🍭 Feito com carinho para Alice Doces 🍭</p>
       </div>

@@ -22,7 +22,6 @@ export interface BoxOption {
   emoji: string;
 }
 
-// Opções de caixa disponíveis
 export const boxOptions: BoxOption[] = [
   {
     id: "caixa-4",
@@ -42,7 +41,6 @@ export const boxOptions: BoxOption[] = [
   }
 ];
 
-// Doces individuais disponíveis para seleção
 export const individualCandies: IndividualCandy[] = [
   {
     id: "doce-1",
@@ -109,17 +107,14 @@ export const individualCandies: IndividualCandy[] = [
   }
 ];
 
-// Função para obter doces individuais disponíveis
 export const getAvailableIndividualCandies = (): IndividualCandy[] => {
   return individualCandies;
 };
 
-// Função para obter opções de caixa
 export const getBoxOptions = (): BoxOption[] => {
   return boxOptions;
 };
 
-// Função para adicionar novo doce individual
 export const addIndividualCandy = (newCandy: Omit<IndividualCandy, 'id'>): IndividualCandy => {
   const id = `${newCandy.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`;
   const candy: IndividualCandy = { ...newCandy, id };
@@ -127,7 +122,6 @@ export const addIndividualCandy = (newCandy: Omit<IndividualCandy, 'id'>): Indiv
   return candy;
 };
 
-// Função para atualizar preço de doce individual
 export const updateIndividualCandyPrice = (id: string, newPrice: number): IndividualCandy | null => {
   const candy = individualCandies.find(c => c.id === id);
   if (candy) {
@@ -137,7 +131,6 @@ export const updateIndividualCandyPrice = (id: string, newPrice: number): Indivi
   return null;
 };
 
-// Função para remover doce individual
 export const removeIndividualCandy = (id: string): boolean => {
   const index = individualCandies.findIndex(c => c.id === id);
   if (index !== -1) {

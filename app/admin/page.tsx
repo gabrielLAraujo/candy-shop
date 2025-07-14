@@ -1,20 +1,21 @@
-import AdminPanel from "@/components/AdminPanel";
+import { cookies } from "next/headers";
+import LoginForm from "./LoginForm";
+import AdminPanelWithLogout from "./AdminPanelWithLogout";
 
-export default function AdminPage() {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-100">
-      <div className="bg-white/80 backdrop-blur-sm shadow-lg">
-        <div className="max-w-4xl mx-auto px-6 py-4">
-          <h1 className="text-4xl font-bold text-center bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-            🛠️ Administração - Alice Doces
-          </h1>
-          <p className="text-center text-gray-600 mt-2">
-            Gerencie seus doces, preços e disponibilidade
-          </p>
-        </div>
-      </div>
+const SESSION_COOKIE = "admin_session";
 
-      <AdminPanel />
-    </div>
-  );
+export default async function AdminPage() {
+  const cookieStore = await cookies();
+  const session = cookieStore.get(SESSION_COOKIE);
+
+  console.log("Verificando sessão:", session);
+
+  // Verifica se a sessão existe e tem valor válido
+  if (!session || session.value !== "active") {
+    console.log("Sessão inválida, redirecionando para login");
+    return <LoginForm />;
+  }
+
+  console.log("Sessão válida, mostrando painel admin");
+  return <AdminPanelWithLogout />;
 }
