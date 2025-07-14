@@ -4,4 +4,6 @@
 .env.production.local
 README.md
 .git
-.gitignore 
+.gitignore
+prisma/seed-real.ts
+prisma/seed.ts 

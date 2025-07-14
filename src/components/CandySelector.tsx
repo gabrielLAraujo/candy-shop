@@ -15,6 +15,7 @@ interface BoxOption {
   price: number;
   description: string;
   emoji: string;
+  weight: number; // peso em gramas
 }
 
 interface CandySelectorProps {
@@ -23,6 +24,7 @@ interface CandySelectorProps {
   onBoxSelection: (box: BoxOption | null) => void;
   onCandySelection: (candyIds: string[]) => void;
   availableCandies: Candy[];
+  availableBoxes: BoxOption[];
 }
 
 export default function CandySelector({
@@ -31,28 +33,10 @@ export default function CandySelector({
   onBoxSelection,
   onCandySelection,
   availableCandies,
+  availableBoxes,
 }: CandySelectorProps) {
   const [showIntroVideo, setShowIntroVideo] = useState(true);
   const [currentStep, setCurrentStep] = useState<"box" | "candies">("box");
-
-  const boxOptions: BoxOption[] = [
-    {
-      id: "caixa-4",
-      name: "Caixa com 4 Doces",
-      size: 4,
-      price: 10.0,
-      description: "Caixa personalizada com 4 doces da sua escolha",
-      emoji: "📦",
-    },
-    {
-      id: "caixa-12",
-      name: "Caixa com 12 Doces",
-      size: 12,
-      price: 30.0,
-      description: "Caixa personalizada com 12 doces da sua escolha",
-      emoji: "🎁",
-    },
-  ];
 
   const handleBoxClick = (box: BoxOption) => {
     onBoxSelection(box);
@@ -99,7 +83,10 @@ export default function CandySelector({
                       🎯 Como Funciona
                     </div>
                     <div className="text-sm text-gray-600 space-y-1">
-                      <div>1. Escolha o tamanho da caixa (4 ou 12 doces)</div>
+                      <div>
+                        1. Escolha o tamanho da caixa (4, 8, 12, 50 ou 100
+                        doces)
+                      </div>
                       <div>2. Selecione seus doces favoritos</div>
                       <div>3. Envie direto para o WhatsApp</div>
                     </div>
@@ -138,30 +125,35 @@ export default function CandySelector({
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {boxOptions.map((box) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 max-w-7xl mx-auto">
+            {availableBoxes.map((box) => (
               <div
                 key={box.id}
-                className="group relative cursor-pointer transition-all duration-300 transform hover:scale-105"
+                className="group relative cursor-pointer transition-all duration-300 transform hover:scale-105 min-h-[280px]"
                 onClick={() => handleBoxClick(box)}
               >
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-100 to-pink-100 border-2 border-purple-200 hover:border-purple-400 transition-all duration-300">
-                  <div className="p-8 text-center">
-                    <div className="text-6xl mb-4">{box.emoji}</div>
-                    <h3 className="text-2xl font-bold text-gray-800 mb-2">
-                      {box.name}
-                    </h3>
-                    <p className="text-gray-600 mb-4">{box.description}</p>
-                    <div className="bg-white/80 rounded-xl p-4 mb-4">
-                      <div className="text-3xl font-bold text-purple-600">
-                        R$ {(box.size * 2.5).toFixed(2)}
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        {box.size} doces personalizados
-                      </div>
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-100 to-pink-100 border-2 border-purple-200 hover:border-purple-400 transition-all duration-300 h-full">
+                  <div className="p-4 text-center h-full flex flex-col justify-between">
+                    <div>
+                      <div className="text-4xl mb-2">{box.emoji}</div>
+                      <h3 className="text-lg font-bold text-gray-800 mb-2">
+                        {box.name}
+                      </h3>
+                      <p className="text-gray-600 text-xs mb-3">
+                        {box.description}
+                      </p>
                     </div>
-                    <div className="bg-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-purple-700 transition-colors">
-                      Escolher Esta Caixa
+                    <div className="bg-white/80 rounded-xl p-2 mb-2">
+                      <div className="text-xl font-bold text-purple-600">
+                        R$ {box.price.toFixed(2)}
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        {box.size} doces
+                      </div>
+                      <div className="text-xs text-gray-500">{box.weight}g</div>
+                    </div>
+                    <div className="bg-purple-600 text-white px-3 py-2 rounded-xl font-semibold hover:bg-purple-700 transition-colors text-xs">
+                      Escolher
                     </div>
                   </div>
                 </div>
@@ -248,67 +240,60 @@ export default function CandySelector({
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              const index = selectedCandies.indexOf(candy.id);
-                              if (index !== -1) {
-                                const newSelection = [
-                                  ...selectedCandies.slice(0, index),
-                                  ...selectedCandies.slice(index + 1),
-                                ];
-                                onCandySelection(newSelection);
-                              }
+                              const newSelected = selectedCandies.filter(
+                                (id) => id !== candy.id
+                              );
+                              onCandySelection(newSelected);
                             }}
-                            className="bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hover:bg-red-600 transition-colors"
+                            className="bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-red-600 transition-colors text-sm font-bold"
                           >
                             −
                           </button>
                         )}
 
                         {/* Add Button */}
-                        {selectedCandies.length < selectedBox.size && (
+                        {canAdd && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (selectedCandies.length < selectedBox.size) {
-                                const newSelection = [
-                                  ...selectedCandies,
-                                  candy.id,
-                                ];
-                                onCandySelection(newSelection);
-                              }
+                              const newSelected = [
+                                ...selectedCandies,
+                                candy.id,
+                              ];
+                              onCandySelection(newSelected);
                             }}
-                            className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hover:bg-green-600 transition-colors"
+                            className="bg-green-500 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-green-600 transition-colors text-sm font-bold"
                           >
                             +
                           </button>
                         )}
                       </div>
 
-                      {/* Selection Indicator */}
-                      {isSelected && (
-                        <div className="absolute top-2 left-2 bg-purple-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg">
+                      {/* Selection Counter */}
+                      {candyCount > 0 && (
+                        <div className="absolute top-2 left-2 bg-purple-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">
                           {candyCount}
                         </div>
                       )}
                     </div>
 
-                    {/* Info Overlay */}
-                    <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-bold text-lg drop-shadow-lg">
-                            {candy.name}
-                          </h3>
-                          <p className="text-sm opacity-90">
-                            {candy.description}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <div className="bg-white/20 rounded-lg p-2 mb-3">
-                            <span className="text-white font-bold text-lg">
-                              R$ {candy.price.toFixed(2)}
-                            </span>
-                          </div>
-                        </div>
+                    {/* Candy Info */}
+                    <div className="p-4">
+                      <h3 className="font-semibold text-gray-800 text-lg mb-1">
+                        {candy.name}
+                      </h3>
+                      <p className="text-gray-600 text-sm mb-2">
+                        {candy.description}
+                      </p>
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold text-purple-600">
+                          R$ {candy.price.toFixed(2)}
+                        </span>
+                        {isSelected && (
+                          <span className="text-green-600 text-sm font-semibold">
+                            ✓ Selecionado
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>

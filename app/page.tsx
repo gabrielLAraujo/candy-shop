@@ -18,18 +18,21 @@ interface BoxOption {
   price: number;
   description: string;
   emoji: string;
+  weight: number; // peso em gramas
 }
 
 export default function Home() {
   const [selectedBox, setSelectedBox] = useState<BoxOption | null>(null);
   const [selectedCandies, setSelectedCandies] = useState<string[]>([]);
   const [availableCandies, setAvailableCandies] = useState<Candy[]>([]);
+  const [availableBoxes, setAvailableBoxes] = useState<BoxOption[]>([]);
   const [loading, setLoading] = useState(true);
   const phoneNumber = "47997010541";
 
-  // Carregar doces do banco de dados
+  // Carregar doces e caixas do banco de dados
   useEffect(() => {
     fetchCandies();
+    fetchBoxes();
   }, []);
 
   const fetchCandies = async () => {
@@ -41,6 +44,16 @@ export default function Home() {
       console.error("Erro ao carregar doces:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchBoxes = async () => {
+    try {
+      const response = await fetch("/api/boxes");
+      const data = await response.json();
+      setAvailableBoxes(data);
+    } catch (error) {
+      console.error("Erro ao carregar caixas:", error);
     }
   };
 
@@ -95,6 +108,7 @@ Olá! Gostaria de fazer um pedido:
 
 *Caixa selecionada:*
 ${selectedBox.name} - ${selectedBox.size} doces personalizados
+Peso: ${selectedBox.weight}g
 
 *Doces escolhidos:*
 ${candyList}
@@ -102,6 +116,7 @@ ${candyList}
 *Resumo:*
 Caixa: ${selectedBox.name}
 Quantidade: ${selectedBox.size} doces personalizados
+Peso total: ${selectedBox.weight}g
 Total: R$ ${finalTotal.toFixed(2)}
 
 *Informações do pedido:*
@@ -148,6 +163,7 @@ Obrigado! :)`;
               onBoxSelection={setSelectedBox}
               onCandySelection={setSelectedCandies}
               availableCandies={availableCandies}
+              availableBoxes={availableBoxes}
             />
           )}
         </div>
@@ -176,10 +192,13 @@ Obrigado! :)`;
                     <p className="text-sm text-gray-600">
                       {selectedBox.description}
                     </p>
+                    <p className="text-xs text-gray-500">
+                      Peso: {selectedBox.weight}g
+                    </p>
                   </div>
                 </div>
                 <span className="font-bold text-purple-600 text-2xl">
-                  R$ {(selectedBox.size * 2.5).toFixed(2)}
+                  R$ {selectedBox.price.toFixed(2)}
                 </span>
               </div>
             </div>
@@ -298,7 +317,7 @@ Obrigado! :)`;
                   <span className="bg-blue-200 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold mr-3 mt-0.5">
                     1
                   </span>
-                  Escolha o tamanho da caixa (4 ou 12 doces)
+                  Escolha o tamanho da caixa (4, 8, 12, 50 ou 100 doces)
                 </li>
                 <li className="flex items-start">
                   <span className="bg-blue-200 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold mr-3 mt-0.5">

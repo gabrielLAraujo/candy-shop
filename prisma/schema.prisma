@@ -68,3 +68,15 @@ model Candy {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+model Box {
+  id          String   @id @default(cuid())
+  name        String
+  size        Int
+  price       Float
+  description String
+  emoji       String
+  weight      Float // peso em gramas
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

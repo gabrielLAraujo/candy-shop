@@ -10,9 +10,16 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { price } = body;
+    const { name, price, description, image } = body;
 
-    if (!price || price <= 0) {
+    if (!name || !price || !description) {
+      return NextResponse.json(
+        { error: 'Nome, preço e descrição são obrigatórios' },
+        { status: 400 }
+      );
+    }
+
+    if (price <= 0) {
       return NextResponse.json(
         { error: 'Preço deve ser maior que zero' },
         { status: 400 }
@@ -21,7 +28,12 @@ export async function PUT(
 
     const candy = await prisma.candy.update({
       where: { id },
-      data: { price: parseFloat(price) }
+      data: { 
+        name,
+        price: parseFloat(price),
+        description,
+        image: image || null
+      }
     });
 
     return NextResponse.json(candy);

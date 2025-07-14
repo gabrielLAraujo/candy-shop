@@ -23,80 +23,77 @@ export default function LoginForm() {
       if (res.ok) {
         window.location.reload();
       } else {
-        setError("Usuário ou senha inválidos");
+        const data = await res.json();
+        setError(data.error || "Usuário ou senha inválidos");
       }
     } catch {
-      setError("Erro ao fazer login. Tente novamente.");
+      setError("Erro de conexão. Tente novamente.");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
-        <div className="bg-white rounded-xl shadow-lg p-8">
-          <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              🍬 Alice Doces
-            </h2>
-            <p className="text-gray-600 mb-8">Painel Administrativo</p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Login Administrativo
+          </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            Alice Doces - Painel de Administração
+          </p>
+        </div>
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <div className="rounded-md shadow-sm -space-y-px">
             <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Email
+              <label htmlFor="username" className="sr-only">
+                Usuário
               </label>
               <input
-                id="email"
-                type="email"
-                placeholder="admin@alicedoces.com"
+                id="username"
+                name="username"
+                type="text"
+                required
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                placeholder="Usuário"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors disabled:bg-gray-100 disabled:text-black"
                 disabled={loading}
               />
             </div>
-
             <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="password" className="sr-only">
                 Senha
               </label>
               <input
                 id="password"
+                name="password"
                 type="password"
-                placeholder="Digite sua senha"
+                required
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                placeholder="Senha"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors disabled:bg-gray-100 disabled:text-black"
                 disabled={loading}
               />
             </div>
+          </div>
 
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                <p className="text-red-600 text-sm">{error}</p>
-              </div>
-            )}
+          {error && (
+            <div className="text-red-600 text-sm text-center">{error}</div>
+          )}
 
+          <div>
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-500 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-600 focus:ring-2 focus:ring-blue-200 focus:ring-offset-2 transition-colors disabled:bg-gray-400 disabled:text-black disabled:cursor-not-allowed"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
               {loading ? "Entrando..." : "Entrar"}
             </button>
-          </form>
-        </div>
+          </div>
+        </form>
       </div>
     </div>
   );
